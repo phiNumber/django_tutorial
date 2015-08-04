@@ -1,0 +1,51 @@
+From 42b33cb14d793f3799c65297e516b6adedae2a85 Mon Sep 17 00:00:00 2001
+From: Alexandr Gudym <Alexander.Gudym@portaone.com>
+Date: Fri, 20 Feb 2015 17:56:07 +0200
+Subject: RT#406923 Check input string for utf8 flag and decode it properly
+
+Change-Id: I710580abe9ff10495ffdf0b04690f23feaaecf1a
+
+diff --git a/mcomps/Controller.mcomp b/mcomps/Controller.mcomp
+index 10a98df..ec5bc8a 100755
+--- a/mcomps/Controller.mcomp
++++ b/mcomps/Controller.mcomp
+@@ -110,7 +110,7 @@ else {
+ # Controller decodes them in-place
+ if ( defined $ARGS{'json_args'} ) {
+     foreach ( split /,/, $ARGS{'json_args'} ) {
+-        $ARGS{$_} = $json->decode( $ARGS{$_} )
++        $ARGS{$_} = utf8_check_and_json_decode( $ARGS{$_}, $json )
+             if ( exists $ARGS{$_} );
+     }
+ }
+@@ -240,7 +240,7 @@ if ( !$result || $@ ) {
+                 push @args_line, q{i_customer} if ( $ph->isCustomer() );
+                 push @args_line, q{i_account}  if ( $ph->isAccount() );
+ 
+-                my $info = $json->decode( $ARGS->{ $ARGS->{'soap_root'} } );
++                my $info = utf8_check_and_json_decode( $ARGS->{ $ARGS->{'soap_root'} }, $json );
+ 
+                 prepare_additional_param( $ARGS, $info );
+ 
+@@ -282,7 +282,7 @@ if ( !$result || $@ ) {
+     sub proceed_with_update{
+         my ($type, $args, $ph, $json) = @_;
+         if (defined $args->{'undefined'}){
+-            my $info = $json->decode($args->{'undefined'});
++            my $info = utf8_check_and_json_decode($args->{'undefined'}, $json);
+             #my @args_line =(q{i_customer});
+             my $prefix = qq{$type.};
+             foreach my $key (keys %$info){
+@@ -315,7 +315,8 @@ if ( !$result || $@ ) {
+         my ( $method, $args, $json ) = @_;
+         if ( defined $args->{extensions_list} ) {
+             my @args_line = (q{i_customer});
+-            my $info = $json->decode( $args->{'extensions_list'} );
++
++            my $info = utf8_check_and_json_decode( $args->{'extensions_list'}, $json );
+ 
+             foreach my $key ( keys %$info ) {
+                 $args->{$key} = $info->{$key};
+-- 
+cgit v0.10.2
+
